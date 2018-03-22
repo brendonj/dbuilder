@@ -225,7 +225,13 @@ def generate_dockerfiles(output_dir, configuration_files, tag_separator="_"):
                 else:
                     dbuilder_namespace = 'library'
 
-                name = repository.name if repository.namespace == '' else repository.namespace + '__' + repository.name
+                # allow overriding repository name to generate cleaner tag names
+                if 'name' in settings:
+                    name = settings['name']
+                elif repository.namespace == '':
+                    name = repository.name
+                else:
+                    repository.namespace + '__' + repository.name
 
                 docker_tag_repo = repository.get_host_prefix() + dbuilder_namespace + '/dbuilder'
                 repo_group.append(convert_docker_tag_to_makefile_target(docker_tag_repo))

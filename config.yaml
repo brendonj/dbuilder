@@ -3,10 +3,12 @@ dbuilder-namespace-mapping:
 
 packages:
   multiarch/debian-debootstrap:
+    name: debian
     templates:
       - {file: apt_based.dockerfile, tags: [wheezy], archs: [i386, amd64, armhf]}
       - {file: apt_based.dockerfile, tags: [jessie, stretch], archs: [i386, amd64, armhf, arm64]}
 
   multiarch/ubuntu-debootstrap:
+    name: ubuntu
     templates:
       - {file: ubuntu.dockerfile, tags: [xenial], archs: [i386, amd64, armhf, arm64]}
