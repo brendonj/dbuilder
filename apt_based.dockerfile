@@ -6,7 +6,7 @@
 RUN apt-get update && \
 echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/10no-recommends && \
 echo 'APT::Install-Suggests "0";' > /etc/apt/apt.conf.d/10no-suggests && \
-apt-get install -y equivs devscripts dpkg-dev && \
+apt-get install -y equivs devscripts dpkg-dev build-essential ca-certificates lsb-release && \
 rm -rf /var/lib/apt/lists/*
 {% endblock %}
 
