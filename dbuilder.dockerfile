@@ -17,7 +17,7 @@ WORKDIR /dbuilder/build/
 
 {% macro run_script(name) -%}
 ADD {{name}} /dbuilder/bin/{{name}}
-ENTRYPOINT /dbuilder/bin/{{name}}
+ENTRYPOINT ["/dbuilder/bin/{{name}}"]
 {% endmacro %}
 
 {%- block custom %}

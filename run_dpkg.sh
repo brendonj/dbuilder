@@ -1,10 +1,7 @@
 #!/bin/bash
 set -ex
 
-if [ ${BUILD_SOURCES_PATH} != "/dbuilder/build" ]; then
-    cp -r ${BUILD_SOURCES_PATH}/. -t /dbuilder/build/
-fi
-cd /dbuilder/build/${DBUILDER_SUBDIR}
+RELEASE=`lsb_release -c -s`
 
 # if some deb files exist in additional_packages directory, we create a trivial
 # local repository
@@ -27,7 +24,23 @@ if [ -n "${preinstall_debs}" ]; then
 fi
 unset preinstall_debs
 
-apt-get update
+# copy the original source to the filename that Debian expects for the orig
+# tarball, stripping any release candidate versioning
+ORIG_TAR_GZ=`echo ${1} | sed 's/\([a-zA-Z]*\)-\([0-9.]*\)\(~rc[0-9]*\)\{0,1\}.tar.gz/\1_\2.orig.tar.gz/'`
+cp /dbuilder/sources/${1} /dbuilder/build/${ORIG_TAR_GZ}
+
+# untar the source
+cd /dbuilder/build/
+tar xzvf ${ORIG_TAR_GZ}
+cd ${1%.tar.gz}
+
+# copy across the debian directory, checking first for a relevant directory
+# that matches our release codename, otherwise a generic one
+if [ -d /dbuilder/sources/debian.${RELEASE} ]; then
+    cp -r /dbuilder/sources/debian.${RELEASE} ./debian
+else
+    cp -r /dbuilder/sources/debian .
+fi
 
 # preinstall hooks
 if [ -d /dbuilder/preinstall.d ]; then
@@ -37,16 +50,17 @@ if [ -d /dbuilder/preinstall.d ]; then
     unset file
 fi
 
+# install dependencies as listed in the package control file
+apt-get update
 mk-build-deps -i -r -t 'apt-get -f -y --force-yes'
-${DBUILDER_BUILD_CMD}
 
-# postinstall hooks
-if [ -d /dbuilder/postinstall.d ]; then
-    for file in `find /dbuilder/postinstall.d -executable -type f | sort -n`; do
-        ${file}
-    done
-    unset file
+# build the package
+DEB_BUILD_OPTIONS=nocheck ${DBUILDER_BUILD_CMD}
+
+# copy the package back into the original source directory
+chmod 644 ../*.deb
+mkdir -p /dbuilder/sources/packages/${RELEASE}
+cp ../*.deb /dbuilder/sources/packages/${RELEASE}/
+if [ -n $OWNER ]; then
+    chown -R $OWNER /dbuilder/sources/packages/${RELEASE}/
 fi
-
-chmod 644 ${BUILD_PACKAGES_FILE_PATH}*.deb
-cp ${BUILD_PACKAGES_FILE_PATH}*.deb ${BUILD_SOURCES_PATH}/${DBUILDER_SUBDIR}
