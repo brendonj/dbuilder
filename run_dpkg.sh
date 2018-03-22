@@ -14,7 +14,7 @@ if [ -n "${preinstall_debs}" ]; then
     mkdir ${repo_path}
     cp ${preinstall_debs} ${repo_path}
     pushd ${repo_path}
-    dpkg-scanpackages . > Packages
+    dpkg-scanpackages --multiversion . > Packages
     popd
     echo "deb file:${repo_path} ./" > /etc/apt/sources.list.d/local_repo.list
 
