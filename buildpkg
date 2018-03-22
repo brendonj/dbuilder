@@ -1,0 +1,124 @@
+#!/usr/bin/env python
+
+import argparse
+import subprocess
+import re
+import sys
+import os
+
+xoff = 0
+yoff = 0
+
+# TODO limit architectures to those available for each image
+ARCHS = ["amd64", "armhf", "arm64", "i386"]
+CODES = ["debian_jessie", "debian_wheezy", "debian_stretch", "ubuntu_xenial"]
+DISTS = ["debian", "ubuntu"]
+
+
+class DefaultList(list):
+    def __copy__(self):
+        return []
+
+
+def run_docker(image, arch, args):
+    print "building packages for %s/%s..." % (image, arch)
+    cmd = ""
+
+    uid = subprocess.check_output(["id", "-u"]).strip()
+    gid = subprocess.check_output(["id", "-g"]).strip()
+    pwd = subprocess.check_output(["pwd"]).strip()
+
+    if args.terminal:
+        global xoff, yoff
+        cmd += "/usr/bin/xterm" + \
+                " -geometry +%d+%d" % (xoff, yoff) + \
+                " -title 'docker %s/%s'" % (image, arch) + \
+                " -e '"
+        xoff += 486
+        if xoff > 1940:
+            xoff = 0
+            yoff += 370
+
+
+    cmd += "/usr/bin/docker run -i --rm"
+    cmd += " -e OWNER=%s:%s" % (uid, gid)
+    cmd += " -v %s:/dbuilder/sources" % pwd
+
+    # add directory containing extra dependencies if required
+    if args.extra:
+        cmd += " -v %s:/dbuilder/additional_packages" % args.extra
+
+    # override the build command if required
+    if args.buildcmd:
+        cmd += " -e DBUILDER_BUILD_CMD=%s" % args.buildcmd
+
+    # override the debian build options if required (e.g. nocheck)
+    if args.debbuildopts:
+        cmd += " -e DEB_BUILD_OPTS=%s" % args.debbuildopts
+
+    # specify the docker image to use and the source tarball to build from
+    cmd += " brendonj/dbuilder:%s_%s %s" % (image, arch, args.tarball)
+
+    # alert the user to success or failure
+    cmd += "; if [ $? -eq 0 ]; then echo -e \"\n---- SUCCESS ----\";"
+    cmd += "else echo -e \"\n---- FAILED ----\"; fi;"
+
+    # force the xterm (if any) to stay open after the build completes by
+    # waiting for user input
+    if args.terminal:
+        cmd += "read -n 1'"
+
+    # send stdout to /dev/null if required
+    stdout = sys.stdout
+    if args.quiet or (not args.terminal and args.parallel):
+        stdout = open(os.devnull, 'wb')
+
+    if args.parallel:
+        subprocess.Popen(cmd, shell=True, stdout=stdout)
+    else:
+        subprocess.call(cmd, shell=True, stdout=stdout)
+
+
+def main(args):
+    tobuild = args.codename
+
+    # if distribution is set then add all codenames that belong to the
+    # distribution and match the given architecture
+    for dist in args.distribution:
+        pattern = re.compile("%s_.*" % dist)
+        tobuild.extend([x for x in CODES if re.match(pattern, x)])
+
+    for image in set(tobuild):
+        for arch in args.architecture:
+            if image == "debian_wheezy" and arch == "arm64":
+                print("skipping debian_wheezy_arm64...")
+                continue
+            run_docker(image, arch, args)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+            description="Build Debian and Ubuntu packages in Docker containers")
+    parser.add_argument("-a", "--architecture", action="append",
+            default=DefaultList(ARCHS), choices=ARCHS)
+    parser.add_argument("-c", "--codename", action="append",
+            default=DefaultList([CODES[0]]), choices=CODES)
+    parser.add_argument("-d", "--distribution", action="append",
+            default=[], choices=DISTS)
+    parser.add_argument("-b", "--buildcmd",
+            help="Override the build command used to build the package (default: dpkg-buildpackage -jN)")
+    parser.add_argument("-e", "--extra",
+            help="Extra packaged dependencies required to build the package")
+    parser.add_argument("-o", "--debbuildopts",
+            help="Set $DEB_BUILD_OPTS when building the package")
+    parser.add_argument("-q", "--quiet", action="store_true", default=False,
+            help="Suppress standard output (default: %(default)s)")
+    parser.add_argument("-p", "--parallel", action="store_true", default=False,
+            help="Build packages in parallel (default: %(default)s)")
+    parser.add_argument("-t", "--terminal", action="store_true", default=False,
+            help="Use a separate xterm for each build (default: %(default)s)")
+    parser.add_argument("tarball", help="Source tarball to build")
+
+    main(parser.parse_args())
+
+# vi:syntax=python

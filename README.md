@@ -1,7 +1,43 @@
 # dbuilder
 Docker images for building packages with clean dependencies in multiple distributions.
 
-## Usage
+## Building a package the easy way
+The `buildpkg` tool can build your package simultaneously on a combination of supported distributions, releases and architectures, without having to deal with running docker commands manually.
+
+```bash
+usage: buildpkg [-h] [-a {amd64,armhf,arm64,i386}]
+                [-c {debian_jessie,debian_wheezy,debian_stretch,ubuntu_xenial}]
+                [-d {debian,ubuntu}] [-b BUILDCMD] [-e EXTRA]
+                [-o DEBBUILDOPTS] [-q] [-p] [-t]
+                tarball
+```
+
+Make sure that you are in a directory that contains the source tarball for the package you want to build, as well as a `debian` directory for the package, before running `buildpkg`. For example, if you wanted to build amd64 and i386 packages for for Debian Jessie:
+
+```bash
+$ ls
+debian example-package.tar.gz
+$ buildpkg -a amd64 -a i386 -c debian_jessie example-package.tar.gz
+```
+
+Or maybe you want to build armhf packages for all Debian releases, with each build in a separate terminal window:
+
+```bash
+$ buildpkg -a armhf -d debian -p -t example-package.tar.gz
+```
+
+And maybe you need to add a few extra packages that you have on the local filesystem to satisfy dependencies:
+
+```bash
+$ mkdir deps
+$ mv dependency-package_1.2.3-1_armhf.deb deps/
+$ ls
+debian deps example-package.tar.gz
+$ buildpkg -a armhf -d debian -p -t -e `pwd`/deps example-package.tar.gz
+```
+
+
+## Image Usage
 All images are available on docker hub https://hub.docker.com/r/brendonj/dbuilder/.
 
 The only thing you have to do is to choose a tag (generated from config.yaml) e.g. 'debian_jessie_amd64' and run:
