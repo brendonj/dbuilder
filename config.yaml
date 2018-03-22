@@ -1,5 +1,5 @@
 dbuilder-namespace-mapping:
-  docker.io: seznam
+  docker.io: brendonj
 
 packages:
   multiarch/debian-debootstrap:

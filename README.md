@@ -2,12 +2,12 @@
 Docker images for building packages with clean dependencies in multiple distributions.
 
 ## Usage
-All images are available on docker hub https://hub.docker.com/r/seznam/dbuilder/.
+All images are available on docker hub https://hub.docker.com/r/brendonj/dbuilder/.
 
-The only thing you have to do is to choose a tag (generated from config.yaml) e.g. 'jessie_latest' and run:
+The only thing you have to do is to choose a tag (generated from config.yaml) e.g. 'debian_jessie_amd64' and run:
 (Docker will automatically pull that image so you don't neet to build anything)
 ```bash
-docker run --rm -v `pwd`:/dbuilder/sources seznam/dbuilder:debian_jessie
+docker run --rm -v `pwd`:/dbuilder/sources brendonj/dbuilder:debian_jessie_amd64
 ```
 and *.deb will appear in your source directory
 
@@ -26,7 +26,7 @@ cp otherpackage_0.22.4_all.deb ./deps/otherpackage_subdir/
 docker run --rm \
     -v `pwd`/deps:/dbuilder/additional_packages \
     -v `pwd`/src:/dbuilder/sources \
-    seznam/dbuilder:debian_jessie
+    brendonj/dbuilder:debian_jessie_amd64
 ```
 
   - **Preinstall hooks** - It is possible to add hooks, before dbuilder tries to satisfy build dependencies. Use volume `/dbuilder/preinstall.d` and drop executable files in. All executable files from this folder will be executed in order determined by numeric `sort`.
@@ -37,7 +37,7 @@ chmod +x ./preinstall.d/*
 docker run --rm \
     -v `pwd`/preinstall.d:/dbuilder/preinstall.d \
     -v `pwd`/src:/dbuilder/sources \
-    seznam/dbuilder:debian_jessie
+    brendonj/dbuilder:debian_jessie_amd64
 ```
 
   - **Postinstall hooks** - It is possible to add hooks, after build package. Use volume `/dbuilder/postinstall.d` and drop executable files in. All executable files from this folder will be executed in order determined by numeric `sort`.
@@ -48,7 +48,7 @@ chmod +x ./postinstall.d/*
 docker run --rm \
     -v `pwd`/postinstall.d:/dbuilder/postinstall.d \
     -v `pwd`/src:/dbuilder/sources \
-    seznam/dbuilder:debian_jessie
+    brendonj/dbuilder:debian_jessie_amd64
 ```
 
 ### Control environment variables
