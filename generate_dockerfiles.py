@@ -237,6 +237,7 @@ def generate_dockerfiles(output_dir, configuration_files, tag_separator="_"):
                     template_file_jinja_relpath = os.path.relpath(template_file_abspath, os.path.dirname(template_file_abspath))
 
                     tags = template_settings['tags']
+                    archs = template_settings['archs']
                     if isinstance(tags, str):
                         if tags.lower() == 'all':
                             verify_certs = str2bool(os.getenv('VERIFY_CERTS', '1'))
@@ -251,38 +252,39 @@ def generate_dockerfiles(output_dir, configuration_files, tag_separator="_"):
 
                     tag_group = []
                     for tag in tags:
-                        template_loader = jinja2.FileSystemLoader(os.path.dirname(template_file_abspath))
-                        template_environment = jinja2.Environment(loader=template_loader)
-                        template = template_environment.get_template(template_file_jinja_relpath)
+                        for arch in archs:
+                            template_loader = jinja2.FileSystemLoader(os.path.dirname(template_file_abspath))
+                            template_environment = jinja2.Environment(loader=template_loader)
+                            template = template_environment.get_template(template_file_jinja_relpath)
 
-                        dockerfile_data = template.render(name=repository.get_image_path(), tag=tag, jinja_env=jinja_env)
+                            dockerfile_data = template.render(name=repository.get_image_path(), tag=tag, arch=arch, jinja_env=jinja_env)
 
-                        docker_tag = docker_tag_name + tag_separator + str(tag)
+                            docker_tag = docker_tag_name + tag_separator + str(tag) + tag_separator + str(arch)
 
-                        makefile_target = convert_docker_tag_to_makefile_target(docker_tag)
-                        tag_group.append(makefile_target)
+                            makefile_target = convert_docker_tag_to_makefile_target(docker_tag)
+                            tag_group.append(makefile_target)
 
-                        dockerfile_filename = docker_tag.replace('/', '__') + '.dockerfile'
+                            dockerfile_filename = docker_tag.replace('/', '__') + '.dockerfile'
 
-                        # Docker hub is special so you cannot use it's hostname
-                        # as with other repositories or push will fail
-                        docker_tag = docker_tag.replace('docker.io/', '')
-                        # Docker at local machine differentiates between library/<name> and <name>
-                        # so we will simplify it
-                        docker_tag = docker_tag.replace('library/', '')
+                            # Docker hub is special so you cannot use it's hostname
+                            # as with other repositories or push will fail
+                            docker_tag = docker_tag.replace('docker.io/', '')
+                            # Docker at local machine differentiates between library/<name> and <name>
+                            # so we will simplify it
+                            docker_tag = docker_tag.replace('library/', '')
 
-                        makefile += 'build-{}:\n\t$(DOCKER_BUILD_CMD) -f {} -t {} $(DOCKER_BUILD_CONTEXT)\n'.format(
-                                    makefile_target, dockerfile_filename, docker_tag)
-                        makefile += 'push-{}:\n\t$(DOCKER_PUSH_CMD) {}\n\n'.format(
-                                    makefile_target, docker_tag)
+                            makefile += 'build-{}:\n\t$(DOCKER_BUILD_CMD) -f {} -t {} $(DOCKER_BUILD_CONTEXT)\n'.format(
+                                        makefile_target, dockerfile_filename, docker_tag)
+                            makefile += 'push-{}:\n\t$(DOCKER_PUSH_CMD) {}\n\n'.format(
+                                        makefile_target, docker_tag)
 
-                        if dockerfile_filename in processed_names:
-                            raise RuntimeError(dockerfile_filename + " has already been processed")
-                        else:
-                            processed_names[dockerfile_filename] = None
+                            if dockerfile_filename in processed_names:
+                                raise RuntimeError(dockerfile_filename + " has already been processed")
+                            else:
+                                processed_names[dockerfile_filename] = None
 
-                        with open(os.path.join(output_dir, dockerfile_filename), 'w+') as dockerfile_f:
-                            dockerfile_f.write(dockerfile_data)
+                            with open(os.path.join(output_dir, dockerfile_filename), 'w+') as dockerfile_f:
+                                dockerfile_f.write(dockerfile_data)
 
                     makefile_target_name = convert_docker_tag_to_makefile_target(docker_tag_name)
                     makefile += 'build-{}: {}\n\n'.format(makefile_target_name, ' '.join(

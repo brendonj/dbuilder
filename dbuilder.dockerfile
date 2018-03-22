@@ -1,5 +1,5 @@
 {% block from -%}
-FROM {{ name }}:{{ tag }}
+FROM {{ name }}:{{ arch }}-{{ tag }}-slim
 {% endblock %}
 
 RUN bash -c "mkdir -p /dbuilder/{additional_packages,bin,sources,build}/"
