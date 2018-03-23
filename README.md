@@ -1,6 +1,8 @@
 # dbuilder
 Docker images for building packages with clean dependencies in multiple distributions.
 
+Based almost entirely on https://github.com/seznam/dbuilder, using images from https://github.com/multiarch/debian-debootstrap and https://github.com/multiarch/ubuntu-debootstrap.
+
 ## Initial setup
 
 Before any of the multiarch images will work, you need to configure binfmt-support on your Docker host:
