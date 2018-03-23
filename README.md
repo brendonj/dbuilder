@@ -1,6 +1,13 @@
 # dbuilder
 Docker images for building packages with clean dependencies in multiple distributions.
 
+## Initial setup
+
+Before any of the multiarch images will work, you need to configure binfmt-support on your Docker host:
+```bash
+$ docker run --rm --privileged multiarch/qemu-user-static:register --reset
+```
+
 ## Building a package the easy way
 The `buildpkg` tool can build your package simultaneously on a combination of supported distributions, releases and architectures, without having to deal with running docker commands manually.
 
