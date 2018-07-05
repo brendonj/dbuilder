@@ -11,4 +11,4 @@ packages:
   multiarch/ubuntu-debootstrap:
     name: ubuntu
     templates:
-      - {file: ubuntu.dockerfile, tags: [xenial], archs: [i386, amd64, armhf, arm64]}
+      - {file: ubuntu.dockerfile, tags: [xenial, bionic], archs: [i386, amd64, armhf, arm64]}

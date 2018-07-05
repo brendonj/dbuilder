@@ -11,7 +11,8 @@ yoff = 0
 
 # TODO limit architectures to those available for each image
 ARCHS = ["amd64", "armhf", "arm64", "i386"]
-CODES = ["debian_jessie", "debian_wheezy", "debian_stretch", "ubuntu_xenial"]
+CODES = ["debian_jessie", "debian_wheezy", "debian_stretch", "ubuntu_xenial",
+      "ubuntu_bionic"]
 DISTS = ["debian", "ubuntu"]
 
 
