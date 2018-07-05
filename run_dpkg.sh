@@ -13,7 +13,7 @@ if [ -n "${preinstall_debs}" ]; then
     pushd ${repo_path}
     dpkg-scanpackages --multiversion . > Packages
     popd
-    echo "deb file:${repo_path} ./" > /etc/apt/sources.list.d/local_repo.list
+    echo "deb [trusted=yes] file:${repo_path} ./" > /etc/apt/sources.list.d/local_repo.list
 
     # if pin-priority is defined, propagate it
     if [ -n "${LOCAL_REPO_PRIORITY}" ]; then
